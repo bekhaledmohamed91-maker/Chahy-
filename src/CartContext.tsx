@@ -8,6 +8,9 @@ interface CartContextType {
   updateQuantity: (productId: number, quantity: number) => void;
   clearCart: () => void;
   total: number;
+  deliveryFee: number;
+  deliveryIncrement: number;
+  setDeliveryFee: (fee: number) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -17,6 +20,18 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const saved = localStorage.getItem('cart');
     return saved ? JSON.parse(saved) : [];
   });
+  const [deliveryFee, setDeliveryFee] = useState(200);
+  const [deliveryIncrement, setDeliveryIncrement] = useState(50);
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data.delivery_fee) setDeliveryFee(data.delivery_fee);
+        if (data.delivery_increment) setDeliveryIncrement(data.delivery_increment);
+      })
+      .catch(err => console.error("Error fetching settings:", err));
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cart));
@@ -53,7 +68,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, total }}>
+    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, total, deliveryFee, deliveryIncrement, setDeliveryFee }}>
       {children}
     </CartContext.Provider>
   );
