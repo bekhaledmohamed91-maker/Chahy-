@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingCart, User, Truck, Home as HomeIcon, Plus, Minus, Trash2, MapPin, Phone, MessageCircle, ArrowLeft, CheckCircle, Package, Settings, LogOut, ChevronRight, XCircle, History, Bell, Clock, Star } from 'lucide-react';
+import { ShoppingCart, User, Truck, Home as HomeIcon, Plus, Minus, Trash2, MapPin, Phone, MessageCircle, ArrowLeft, CheckCircle, Package, Settings, LogOut, ChevronRight, XCircle, History, Bell, Clock, Star, Camera, Upload } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CartProvider, useCart } from './CartContext';
 import { Product, Order, CartItem, Driver, Customer, Voucher } from './types';
@@ -1209,6 +1209,23 @@ const Admin = () => {
     });
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, callback: (base64: string) => void) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check file size (limit to 2MB for base64 efficiency)
+    if (file.size > 2 * 1024 * 1024) {
+      alert("L'image est trop lourde (max 2Mo).");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      callback(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <div className="pb-32 pt-6 px-4 max-w-4xl mx-auto">
       <header className="flex justify-between items-center mb-8">
@@ -1424,14 +1441,37 @@ const Admin = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-400 uppercase mb-2">URL de l'image</label>
-                  <input 
-                    required
-                    type="text"
-                    value={newProduct.image}
-                    onChange={e => setNewProduct({ ...newProduct, image: e.target.value })}
-                    className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm"
-                  />
+                  <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Image du produit</label>
+                  <div className="flex gap-4 items-center">
+                    <div className="w-16 h-16 rounded-xl bg-gray-50 flex items-center justify-center overflow-hidden border border-gray-100 shrink-0">
+                      {newProduct.image ? (
+                        <img src={newProduct.image} alt="Preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      ) : (
+                        <Camera size={24} className="text-gray-300" />
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <div className="flex gap-2">
+                        <label className="flex-1 bg-green-50 text-green-700 px-4 py-3 rounded-xl text-sm font-bold cursor-pointer hover:bg-green-100 transition-all flex items-center justify-center gap-2">
+                          <Upload size={18} />
+                          Choisir une photo
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={(e) => handleImageUpload(e, (base64) => setNewProduct({ ...newProduct, image: base64 }))}
+                          />
+                        </label>
+                      </div>
+                      <input 
+                        type="text"
+                        value={newProduct.image}
+                        onChange={e => setNewProduct({ ...newProduct, image: e.target.value })}
+                        className="w-full bg-gray-50 border-none rounded-xl px-4 py-2 text-[10px] text-gray-400"
+                        placeholder="Ou collez un lien URL"
+                      />
+                    </div>
+                  </div>
                 </div>
                 <button type="submit" className="w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition-all">
                   Ajouter le produit
@@ -1491,7 +1531,19 @@ const Admin = () => {
                     </div>
                   </div>
                   <div className="mt-2 flex flex-col gap-1">
-                    <span className="text-[10px] text-gray-400 uppercase font-bold">URL Image</span>
+                    <span className="text-[10px] text-gray-400 uppercase font-bold">Image</span>
+                    <div className="flex gap-2">
+                      <label className="flex-1 bg-gray-100 text-gray-600 px-3 py-2 rounded-xl text-[10px] font-bold cursor-pointer hover:bg-gray-200 transition-all flex items-center justify-center gap-1">
+                        <Upload size={12} />
+                        Changer
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={(e) => handleImageUpload(e, (base64) => handleUpdateProduct(product.id, { image: base64 }))}
+                        />
+                      </label>
+                    </div>
                     <input 
                       type="text"
                       value={product.image}
