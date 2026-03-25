@@ -5,6 +5,7 @@ export interface Product {
   image: string;
   stock: number;
   category: string;
+  unit?: 'kg' | 'pièce';
 }
 
 export interface CartItem extends Product {

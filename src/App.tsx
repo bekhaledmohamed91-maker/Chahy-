@@ -189,7 +189,7 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
           }}
         />
         <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-green-700 shadow-sm">
-          {product.price} DA
+          {product.price} DA {product.unit ? `/ ${product.unit}` : ''}
         </div>
         {product.stock <= 0 && (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -327,9 +327,9 @@ const Cart = () => {
             />
             <div className="flex-1">
               <h3 className="font-bold text-gray-800">{item.name}</h3>
-              <p className="text-green-600 font-bold text-sm">{item.price} DA</p>
+              <p className="text-green-600 font-bold text-sm">{item.price} DA {item.unit ? `/ ${item.unit}` : ''}</p>
               {item.quantity > getStock(item.id) && (
-                <p className="text-red-500 text-[10px] font-bold mt-1">Stock insuffisant (Max: {getStock(item.id)})</p>
+                <p className="text-red-500 text-[10px] font-bold mt-1">Stock insuffisant (Max: {getStock(item.id)} {item.unit || 'pièce'})</p>
               )}
               <div className="flex items-center gap-3 mt-2">
                 <button 
@@ -338,7 +338,10 @@ const Cart = () => {
                 >
                   <Minus size={14} />
                 </button>
-                <span className="font-bold w-6 text-center">{item.quantity}</span>
+                <div className="flex flex-col items-center">
+                  <span className="font-bold w-12 text-center">{item.quantity}</span>
+                  <span className="text-[8px] text-gray-400 font-bold uppercase">{item.unit || 'pièce'}</span>
+                </div>
                 <button 
                   onClick={() => {
                     if (item.quantity < getStock(item.id)) {
@@ -520,7 +523,7 @@ const Checkout = () => {
       if (res.ok) {
         const { id } = await res.json();
         // WhatsApp Message
-        const itemsList = cart.map(item => `- ${item.name} x${item.quantity} (${item.price * item.quantity} DA)`).join('\n');
+        const itemsList = cart.map(item => `- ${item.name} x${item.quantity} ${item.unit || 'pièce'} (${item.price * item.quantity} DA)`).join('\n');
         const message = `*Nouvelle Commande - Chahy Vert*\n\n*Client:* ${formData.name}\n*Tél:* ${formData.phone}\n*Adresse:* ${formData.address}\n\n*Produits:*\n${itemsList}\n\n*Sous-total:* ${total} DA\n*Distance:* ${distance} km\n*Livraison (à payer au livreur):* ${selectedFee} DA\n${appliedVoucher ? `*Remise (Bon d'achat):* -${appliedVoucher.amount} DA\n` : ''}*Total à payer:* ${finalTotal} DA\n${formData.remark ? `\n*Remarque:* ${formData.remark}` : ''}`;
         
         const encodedMessage = encodeURIComponent(message);
@@ -1115,6 +1118,7 @@ const Admin = () => {
     price: 0,
     stock: 0,
     category: 'Pièces',
+    unit: 'pièce' as 'kg' | 'pièce',
     image: 'https://images.unsplash.com/photo-1606728035253-49e8a23146de?auto=format&fit=crop&w=800&q=80'
   });
 
@@ -1205,6 +1209,7 @@ const Admin = () => {
       price: 0,
       stock: 0,
       category: 'Pièces',
+      unit: 'pièce',
       image: 'https://images.unsplash.com/photo-1606728035253-49e8a23146de?auto=format&fit=crop&w=800&q=80'
     });
   };
@@ -1439,6 +1444,17 @@ const Admin = () => {
                       className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm"
                     />
                   </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Unité</label>
+                    <select 
+                      value={newProduct.unit}
+                      onChange={e => setNewProduct({ ...newProduct, unit: e.target.value as 'kg' | 'pièce' })}
+                      className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm"
+                    >
+                      <option value="pièce">Par pièce</option>
+                      <option value="kg">Par kg</option>
+                    </select>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Image du produit</label>
@@ -1521,13 +1537,24 @@ const Admin = () => {
                       />
                     </div>
                     <div className="flex flex-col gap-1">
-                      <span className="text-[10px] text-gray-400 uppercase font-bold">Stock</span>
+                      <span className="text-[10px] text-gray-400 uppercase font-bold">Stock ({product.unit || 'pièce'})</span>
                       <input 
                         type="number"
                         value={product.stock}
                         onChange={(e) => handleUpdateProduct(product.id, { stock: parseInt(e.target.value) || 0 })}
                         className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-sm font-bold text-gray-700"
                       />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] text-gray-400 uppercase font-bold">Unité</span>
+                      <select 
+                        value={product.unit || 'pièce'}
+                        onChange={(e) => handleUpdateProduct(product.id, { unit: e.target.value as 'kg' | 'pièce' })}
+                        className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-[10px] font-bold text-gray-700"
+                      >
+                        <option value="pièce">Pièce</option>
+                        <option value="kg">Kg</option>
+                      </select>
                     </div>
                   </div>
                   <div className="mt-2 flex flex-col gap-1">
