@@ -491,7 +491,7 @@ const Checkout = () => {
     }
     setIsSubmitting(true);
 
-    const finalTotal = Math.max(0, total + selectedFee - (appliedVoucher?.amount || 0));
+    const finalTotal = Math.max(0, total - (appliedVoucher?.amount || 0)) + selectedFee;
 
     const orderData = {
       customer_name: formData.name,
@@ -521,7 +521,7 @@ const Checkout = () => {
         const { id } = await res.json();
         // WhatsApp Message
         const itemsList = cart.map(item => `- ${item.name} x${item.quantity} (${item.price * item.quantity} DA)`).join('\n');
-        const message = `*Nouvelle Commande - Chahy Vert*\n\n*Client:* ${formData.name}\n*Tél:* ${formData.phone}\n*Adresse:* ${formData.address}\n\n*Produits:*\n${itemsList}\n\n*Sous-total:* ${total} DA\n*Distance:* ${distance} km\n*Livraison:* ${selectedFee} DA\n${appliedVoucher ? `*Remise:* -${appliedVoucher.amount} DA\n` : ''}*Total:* ${finalTotal} DA\n${formData.remark ? `\n*Remarque:* ${formData.remark}` : ''}`;
+        const message = `*Nouvelle Commande - Chahy Vert*\n\n*Client:* ${formData.name}\n*Tél:* ${formData.phone}\n*Adresse:* ${formData.address}\n\n*Produits:*\n${itemsList}\n\n*Sous-total:* ${total} DA\n*Distance:* ${distance} km\n*Livraison (à payer au livreur):* ${selectedFee} DA\n${appliedVoucher ? `*Remise (Bon d'achat):* -${appliedVoucher.amount} DA\n` : ''}*Total à payer:* ${finalTotal} DA\n${formData.remark ? `\n*Remarque:* ${formData.remark}` : ''}`;
         
         const encodedMessage = encodeURIComponent(message);
         const whatsappUrl = `https://wa.me/213557758296?text=${encodedMessage}`;
@@ -680,7 +680,7 @@ const Checkout = () => {
               <Package size={20} />
               <span className="font-black text-lg">Total à payer</span>
             </div>
-            <span className="text-2xl font-black text-green-700">{Math.max(0, total + selectedFee - (appliedVoucher?.amount || 0))} DA</span>
+            <span className="text-2xl font-black text-green-700">{Math.max(0, total - (appliedVoucher?.amount || 0)) + selectedFee} DA</span>
           </div>
 
           <div className="mb-4">
@@ -702,6 +702,9 @@ const Checkout = () => {
                 Appliquer
               </button>
             </div>
+            {appliedVoucher && (
+              <p className="text-[10px] text-green-600 mt-2 font-bold italic">* Le bon d'achat s'applique uniquement sur les produits. Les frais de livraison restent à la charge du client.</p>
+            )}
           </div>
           <p className="text-xs text-green-600 mt-4 opacity-80 text-center">Paiement à la livraison. Vous paierez le livreur une fois votre commande reçue.</p>
         </div>
