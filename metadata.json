@@ -1,0 +1,7 @@
+{
+  "name": "Chahy Vert",
+  "description": "Une application moderne pour la vente de poulet à Sidi Bel Abbès. Commandez facilement vos produits frais (poulet entier, cuisses, ailes, filet, poulet mariné) et recevez-les rapidement.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
