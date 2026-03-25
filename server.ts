@@ -31,9 +31,9 @@ async function startServer() {
     console.log("Database file not found, creating new one.");
     // Initial products
     data.products = [
-      { id: 1, name: "Poulet entier", price: 1200, image: "https://images.unsplash.com/photo-1587593810167-a84920ea084d?auto=format&fit=crop&w=800&q=80", stock: 20, category: "Volailles" },
+      { id: 1, name: "Poulet entier", price: 1200, image: "https://images.unsplash.com/photo-1606728035253-49e8a23146de?auto=format&fit=crop&w=800&q=80", stock: 20, category: "Volailles" },
       { id: 2, name: "Cuisses", price: 700, image: "https://images.unsplash.com/photo-1615557960916-5f4791effe82?auto=format&fit=crop&w=800&q=80", stock: 50, category: "Pièces" },
-      { id: 3, name: "Ailes", price: 500, image: "https://images.unsplash.com/photo-1527477396000-e27163b481c2?auto=format&fit=crop&w=800&q=80", stock: 100, category: "Pièces" },
+      { id: 3, name: "Ailes", price: 500, image: "https://images.unsplash.com/photo-1569396116180-210c182bedb8?auto=format&fit=crop&w=800&q=80", stock: 100, category: "Pièces" },
       { id: 4, name: "Filet", price: 900, image: "https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=800&q=80", stock: 30, category: "Pièces" },
       { id: 5, name: "Poulet mariné", price: 1300, image: "https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?auto=format&fit=crop&w=800&q=80", stock: 15, category: "Volailles" },
     ];
