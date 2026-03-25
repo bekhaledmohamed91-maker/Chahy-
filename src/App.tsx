@@ -439,16 +439,16 @@ const Admin = () => {
     );
   }
 
-  const handleUpdateStock = async (id: number, newStock: number) => {
+  const handleUpdateProduct = async (id: number, updates: Partial<Product>) => {
     const product = products.find(p => p.id === id);
     if (!product) return;
     
     await fetch(`/api/products/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...product, stock: newStock })
+      body: JSON.stringify({ ...product, ...updates })
     });
-    setProducts(products.map(p => p.id === id ? { ...p, stock: newStock } : p));
+    setProducts(products.map(p => p.id === id ? { ...p, ...updates } : p));
   };
 
   return (
@@ -526,15 +526,25 @@ const Admin = () => {
               />
               <div className="flex-1">
                 <h3 className="font-bold text-gray-800">{product.name}</h3>
-                <p className="text-green-600 font-bold text-sm">{product.price} DA</p>
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="text-xs text-gray-400">Stock:</span>
-                  <input 
-                    type="number"
-                    value={product.stock}
-                    onChange={(e) => handleUpdateStock(product.id, parseInt(e.target.value))}
-                    className="w-16 bg-gray-50 border-none rounded-lg px-2 py-1 text-xs font-bold"
-                  />
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] text-gray-400 uppercase font-bold">Prix (DA)</span>
+                    <input 
+                      type="number"
+                      value={product.price}
+                      onChange={(e) => handleUpdateProduct(product.id, { price: parseInt(e.target.value) || 0 })}
+                      className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-sm font-bold text-green-700"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] text-gray-400 uppercase font-bold">Stock</span>
+                    <input 
+                      type="number"
+                      value={product.stock}
+                      onChange={(e) => handleUpdateProduct(product.id, { stock: parseInt(e.target.value) || 0 })}
+                      className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-sm font-bold text-gray-700"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
