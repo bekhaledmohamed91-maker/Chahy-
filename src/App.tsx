@@ -396,9 +396,16 @@ const Admin = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [view, setView] = useState<'products' | 'orders'>('orders');
-  const [isEditing, setIsEditing] = useState<Product | null>(null);
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newProduct, setNewProduct] = useState({
+    name: '',
+    price: 0,
+    stock: 0,
+    category: 'Pièces',
+    image: 'https://images.unsplash.com/photo-1606728035253-49e8a23146de?auto=format&fit=crop&w=800&q=80'
+  });
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -451,10 +458,43 @@ const Admin = () => {
     setProducts(products.map(p => p.id === id ? { ...p, ...updates } : p));
   };
 
+  const handleDeleteProduct = async (id: number) => {
+    if (!confirm('Voulez-vous vraiment supprimer ce produit ?')) return;
+    await fetch(`/api/products/${id}`, { method: 'DELETE' });
+    setProducts(products.filter(p => p.id !== id));
+  };
+
+  const handleAddProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = await fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newProduct)
+    });
+    const addedProduct = await res.json();
+    setProducts([...products, addedProduct]);
+    setShowAddForm(false);
+    setNewProduct({
+      name: '',
+      price: 0,
+      stock: 0,
+      category: 'Pièces',
+      image: 'https://images.unsplash.com/photo-1606728035253-49e8a23146de?auto=format&fit=crop&w=800&q=80'
+    });
+  };
+
   return (
     <div className="pb-32 pt-6 px-4 max-w-4xl mx-auto">
       <header className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold text-gray-800">Administration</h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl font-bold text-gray-800">Administration</h1>
+          <button 
+            onClick={() => setIsAuthenticated(false)}
+            className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+          >
+            <LogOut size={20} />
+          </button>
+        </div>
         <div className="flex bg-gray-100 p-1 rounded-2xl">
           <button 
             onClick={() => setView('orders')}
@@ -509,46 +549,148 @@ const Admin = () => {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {products.map(product => (
-            <div key={product.id} className="bg-white p-4 rounded-3xl border border-gray-100 flex gap-4 items-center">
-              <img 
-                src={product.image} 
-                alt={product.name} 
-                className="w-16 h-16 rounded-2xl object-cover" 
-                referrerPolicy="no-referrer" 
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  if (target.src !== "https://images.unsplash.com/photo-1516684732162-798a0062be99?auto=format&fit=crop&w=800&q=80") {
-                    target.src = "https://images.unsplash.com/photo-1516684732162-798a0062be99?auto=format&fit=crop&w=800&q=80";
-                  }
-                }}
-              />
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-800">{product.name}</h3>
-                <div className="grid grid-cols-2 gap-2 mt-2">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[10px] text-gray-400 uppercase font-bold">Prix (DA)</span>
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-bold text-gray-800">Gestion des produits</h2>
+            <button 
+              onClick={() => setShowAddForm(!showAddForm)}
+              className="bg-green-600 text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-green-700 transition-all"
+            >
+              {showAddForm ? <Minus size={18} /> : <Plus size={18} />}
+              {showAddForm ? "Annuler" : "Nouveau produit"}
+            </button>
+          </div>
+
+          <AnimatePresence>
+            {showAddForm && (
+              <motion.form 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                onSubmit={handleAddProduct}
+                className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm space-y-4 overflow-hidden"
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Nom du produit</label>
                     <input 
-                      type="number"
-                      value={product.price}
-                      onChange={(e) => handleUpdateProduct(product.id, { price: parseInt(e.target.value) || 0 })}
-                      className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-sm font-bold text-green-700"
+                      required
+                      type="text"
+                      value={newProduct.name}
+                      onChange={e => setNewProduct({ ...newProduct, name: e.target.value })}
+                      className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm"
+                      placeholder="Ex: Poulet entier"
                     />
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[10px] text-gray-400 uppercase font-bold">Stock</span>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Catégorie</label>
+                    <select 
+                      value={newProduct.category}
+                      onChange={e => setNewProduct({ ...newProduct, category: e.target.value })}
+                      className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm"
+                    >
+                      <option value="Volailles">Volailles</option>
+                      <option value="Pièces">Pièces</option>
+                      <option value="Mariné">Mariné</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Prix (DA)</label>
                     <input 
+                      required
                       type="number"
-                      value={product.stock}
-                      onChange={(e) => handleUpdateProduct(product.id, { stock: parseInt(e.target.value) || 0 })}
-                      className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-sm font-bold text-gray-700"
+                      value={newProduct.price}
+                      onChange={e => setNewProduct({ ...newProduct, price: parseInt(e.target.value) || 0 })}
+                      className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Stock initial</label>
+                    <input 
+                      required
+                      type="number"
+                      value={newProduct.stock}
+                      onChange={e => setNewProduct({ ...newProduct, stock: parseInt(e.target.value) || 0 })}
+                      className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-400 uppercase mb-2">URL de l'image</label>
+                  <input 
+                    required
+                    type="text"
+                    value={newProduct.image}
+                    onChange={e => setNewProduct({ ...newProduct, image: e.target.value })}
+                    className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-sm"
+                  />
+                </div>
+                <button type="submit" className="w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 transition-all">
+                  Ajouter le produit
+                </button>
+              </motion.form>
+            )}
+          </AnimatePresence>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {products.map(product => (
+              <div key={product.id} className="bg-white p-4 rounded-3xl border border-gray-100 flex gap-4 items-center group">
+                <div className="relative">
+                  <img 
+                    src={product.image} 
+                    alt={product.name} 
+                    className="w-16 h-16 rounded-2xl object-cover" 
+                    referrerPolicy="no-referrer" 
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      if (target.src !== "https://images.unsplash.com/photo-1516684732162-798a0062be99?auto=format&fit=crop&w=800&q=80") {
+                        target.src = "https://images.unsplash.com/photo-1516684732162-798a0062be99?auto=format&fit=crop&w=800&q=80";
+                      }
+                    }}
+                  />
+                  <button 
+                    onClick={() => handleDeleteProduct(product.id)}
+                    className="absolute -top-2 -left-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-gray-800">{product.name}</h3>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] text-gray-400 uppercase font-bold">Prix (DA)</span>
+                      <input 
+                        type="number"
+                        value={product.price}
+                        onChange={(e) => handleUpdateProduct(product.id, { price: parseInt(e.target.value) || 0 })}
+                        className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-sm font-bold text-green-700"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] text-gray-400 uppercase font-bold">Stock</span>
+                      <input 
+                        type="number"
+                        value={product.stock}
+                        onChange={(e) => handleUpdateProduct(product.id, { stock: parseInt(e.target.value) || 0 })}
+                        className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-sm font-bold text-gray-700"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-2 flex flex-col gap-1">
+                    <span className="text-[10px] text-gray-400 uppercase font-bold">URL Image</span>
+                    <input 
+                      type="text"
+                      value={product.image}
+                      onChange={(e) => handleUpdateProduct(product.id, { image: e.target.value })}
+                      className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-[10px] text-gray-500 truncate"
+                      placeholder="Lien de l'image"
                     />
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>
