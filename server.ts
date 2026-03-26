@@ -168,7 +168,8 @@ async function startServer() {
 
       // Loyalty points logic
       if (status === 'delivered' && oldStatus !== 'delivered') {
-        const pointsToAdd = Math.floor(Number(order.total_price) / 5000) * 10;
+        // More granular points: 1 point per 500 DA (same as 10 pts per 5000 DA)
+        const pointsToAdd = Math.floor(Number(order.total_price) / 500);
         if (pointsToAdd > 0) {
           // Normalize phone numbers for comparison (remove spaces)
           const normalizedOrderPhone = order.customer_phone.replace(/\s/g, '');

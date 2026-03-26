@@ -464,26 +464,42 @@ const Checkout = () => {
     }
   }, [selectedStore]);
 
-  const useCurrentLocation = React.useCallback(() => {
+  const [isLocating, setIsLocating] = useState(false);
+
+  const useCurrentLocation = React.useCallback((isManual = false) => {
     if (!navigator.geolocation) {
-      alert("La géolocalisation n'est pas supportée par votre navigateur.");
+      if (isManual) alert("La géolocalisation n'est pas supportée par votre navigateur.");
       return;
     }
 
+    if (isManual) setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
         handleLocationSelect(latitude, longitude);
+        if (isManual) setIsLocating(false);
       },
       (error) => {
         console.error("Erreur de géolocalisation:", error);
-        alert("Impossible de récupérer votre position. Veuillez l'indiquer manuellement sur la carte.");
+        if (isManual) {
+          setIsLocating(false);
+          if (error.code === error.PERMISSION_DENIED) {
+            alert("L'accès à la position a été refusé. Veuillez l'activer dans les paramètres de votre téléphone pour cette application.");
+          } else {
+            alert("Impossible de récupérer votre position automatiquement. Veuillez l'indiquer manuellement sur la carte en cliquant dessus.");
+          }
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
       }
     );
   }, [handleLocationSelect]);
 
   useEffect(() => {
-    useCurrentLocation();
+    useCurrentLocation(false);
   }, [useCurrentLocation]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -613,11 +629,18 @@ const Checkout = () => {
               )}
               <button 
                 type="button"
-                onClick={useCurrentLocation}
-                className="bg-green-600 text-white p-2 rounded-full shadow-sm hover:bg-green-700 transition-all"
+                onClick={() => useCurrentLocation(true)}
+                disabled={isLocating}
+                className={cn(
+                  "bg-green-600 text-white px-3 py-2 rounded-full shadow-sm hover:bg-green-700 transition-all flex items-center gap-2",
+                  isLocating && "opacity-50 cursor-not-allowed"
+                )}
                 title="Utiliser ma position actuelle"
               >
-                <MapPin size={16} />
+                <MapPin size={16} className={cn(isLocating && "animate-bounce")} />
+                <span className="text-[10px] font-bold uppercase tracking-tighter">
+                  {isLocating ? "Recherche..." : "Me localiser"}
+                </span>
               </button>
             </div>
           </div>
@@ -743,7 +766,9 @@ const Loyalty = () => {
       const data = await res.json();
       setVouchers(data.vouchers);
       setOrders(data.orders);
-      // Removed login(data.customer) to prevent infinite loop
+      if (data.customer) {
+        login(data.customer);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -752,10 +777,10 @@ const Loyalty = () => {
   };
 
   useEffect(() => {
-    if (customer) {
+    if (customer?.phone) {
       fetchData();
     }
-  }, [customer.phone]); // Only trigger when phone changes, not every data update
+  }, [customer?.phone]); // Only trigger when phone changes, not every data update
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -883,13 +908,23 @@ const Loyalty = () => {
           <h1 className="text-2xl font-black text-gray-800">Bonjour, {customer.name}</h1>
           <p className="text-gray-500 text-sm">{customer.phone}</p>
         </div>
-        <button 
-          onClick={logout}
-          className="p-3 text-gray-400 hover:text-red-500 transition-colors"
-          title="Déconnexion"
-        >
-          <LogOut size={24} />
-        </button>
+        <div className="flex gap-2">
+          <button 
+            onClick={fetchData}
+            disabled={fetchingData}
+            className="p-3 text-green-600 hover:bg-green-50 rounded-xl transition-all"
+            title="Actualiser"
+          >
+            <History size={24} className={cn(fetchingData && "animate-spin")} />
+          </button>
+          <button 
+            onClick={logout}
+            className="p-3 text-gray-400 hover:text-red-500 transition-colors"
+            title="Déconnexion"
+          >
+            <LogOut size={24} />
+          </button>
+        </div>
       </header>
 
       <motion.div 
@@ -947,7 +982,7 @@ const Loyalty = () => {
               <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0">
                 <Package size={20} className="text-green-600" />
               </div>
-              <p className="text-xs text-gray-600 leading-relaxed">Chaque <span className="font-black text-green-700">5000 DA</span> dépensés vous rapportent <span className="font-black text-green-700">10 points</span>.</p>
+              <p className="text-xs text-gray-600 leading-relaxed">Chaque <span className="font-black text-green-700">500 DA</span> dépensés vous rapportent <span className="font-black text-green-700">1 point</span>.</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-3xl border border-gray-100 flex items-center gap-4">
               <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0">
